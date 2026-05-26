@@ -1,0 +1,23 @@
+DOMAIN = "purelink"
+
+CONF_SWITCHER_ID = "switcher_id"
+CONF_NUM_INPUTS = "num_inputs"
+CONF_NUM_OUTPUTS = "num_outputs"
+
+DEFAULT_PORT = 3000
+DEFAULT_SWITCHER_ID = 255
+DEFAULT_TIMEOUT = 5
+DEFAULT_POLL_INTERVAL = 30
+
+CMD_CONNECT_TEMPLATE = "*{sid:03d}CI{inp:02d}O{out:02d}!"
+CMD_DISCONNECT_TEMPLATE = "*{sid:03d}CI00O{out:02d}!"
+CMD_DISCONNECT_ALL = "*{sid:03d}DALLIO!"
+CMD_STATUS_ALL = "*{sid:03d}?C!"
+CMD_HEARTBEAT = "*{sid:03d}H000!"
+
+RESP_ERROR_COMMAND = "Command Code Error"
+RESP_ERROR_SWITCHER = "Switcher ID Error"
+
+DISCONNECTED_LABEL = "Disconnected"
+
+PLATFORMS = ["select"]

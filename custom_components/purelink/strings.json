@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up PureLink Matrix Switcher",
+        "description": "Enter the connection details for your PureLink by Dtrovision switcher.",
+        "data": {
+          "host": "IP Address or Hostname",
+          "port": "TCP Port",
+          "switcher_id": "Switcher ID",
+          "num_inputs": "Number of Inputs",
+          "num_outputs": "Number of Outputs"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the switcher. Check the IP address, port, and that the device is powered on."
+    },
+    "abort": {
+      "already_configured": "This switcher is already configured."
+    }
+  }
+}
