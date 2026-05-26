@@ -41,3 +41,6 @@ jobs:
       - uses: hacs/action@main
         with:
           category: integration
+          # Skip brand-assets check until a PR is merged into home-assistant/brands.
+          # https://hacs.xyz/docs/publish/include#check-brands
+          ignore: brands
