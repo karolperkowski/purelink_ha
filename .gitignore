@@ -1,0 +1,17 @@
+# Editor / IDE
+.vscode/settings.json
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Build / dist
+*.egg-info/
+dist/
+build/
+
+# Release artifacts (built by the release workflow, never committed)
+purelink.zip
