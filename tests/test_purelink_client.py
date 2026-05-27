@@ -14,7 +14,7 @@ from custom_components.purelink.purelink_client import PureLinkClient
 
 
 def _client() -> PureLinkClient:
-    return PureLinkClient(host="192.0.2.10", port=3000, switcher_id=255)
+    return PureLinkClient(host="192.0.2.10", port=23, switcher_id=255)
 
 
 def test_command_templates_are_zero_padded() -> None:

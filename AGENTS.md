@@ -50,13 +50,13 @@ Quick checks without HA running:
 
 ```bash
 # Heartbeat
-echo -ne "*255H000!\r\n" | nc <device_ip> 3000
+echo -ne "*255H000!\r\n" | nc <device_ip> 23
 
 # Query all connections
-echo -ne "*255?C!\r\n" | nc <device_ip> 3000
+echo -ne "*255?C!\r\n" | nc <device_ip> 23
 
 # Route input 1 to output 1
-echo -ne "*255CI01O01!\r\n" | nc <device_ip> 3000
+echo -ne "*255CI01O01!\r\n" | nc <device_ip> 23
 ```
 
 For repeatable diagnostics, use `python tools/diagnose.py --host <ip> status|dump|probe`.

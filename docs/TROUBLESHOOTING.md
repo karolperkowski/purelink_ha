@@ -10,13 +10,13 @@ python tools/diagnose.py --host 192.0.2.10 status
 
 Expected:
 ```
-UP    192.0.2.10:3000  4.2ms  raw='*255H000!'
+UP    192.0.2.10:23  4.2ms  raw='*255H000!'
 ```
 
 If `DOWN`:
 - Confirm the IP from the device's network settings page.
 - Confirm the device is powered on and on the same network.
-- `nc -v 192.0.2.10 3000` to rule out a routing / firewall issue.
+- `nc -v 192.0.2.10 23` to rule out a routing / firewall issue.
 
 ## Dump current routing
 

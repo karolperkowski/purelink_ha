@@ -116,7 +116,7 @@ def main() -> int:
         description="Diagnostics for the PureLink matrix switcher (stdlib only).",
     )
     parser.add_argument("--host", required=True, help="device IP or hostname")
-    parser.add_argument("--port", type=int, default=3000)
+    parser.add_argument("--port", type=int, default=23)
     parser.add_argument("--switcher-id", type=int, default=255)
     sub = parser.add_subparsers(dest="action", required=True)
 
