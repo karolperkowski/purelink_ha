@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*'
 
+# See ci.yml for context — opt into Node 24 ahead of the forced cutover.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   release:
     name: Build + publish release
