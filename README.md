@@ -1,6 +1,6 @@
-# PureLink by Dtrovision — Home Assistant Integration
+# PureLink — Home Assistant Integration
 
-A Home Assistant custom integration for **PureLink by Dtrovision** AV matrix switchers (UX series). Control video routing from your Home Assistant dashboard.
+A Home Assistant custom integration for **PureLink** AV matrix switchers (UX series). Control video routing from your Home Assistant dashboard.
 
 ## Features
 
@@ -33,7 +33,7 @@ Any PureLink / Dtrovision matrix switcher with a LAN port that accepts the ASCII
 
 1. In HACS → Integrations → ⋮ → Custom repositories
 2. Add this repository URL with category **Integration**
-3. Install **PureLink by Dtrovision**
+3. Install **PureLink**
 4. Restart Home Assistant
 
 ## Configuration

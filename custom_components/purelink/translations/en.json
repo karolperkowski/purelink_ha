@@ -3,7 +3,7 @@
     "step": {
       "user": {
         "title": "Set up PureLink Matrix Switcher",
-        "description": "Enter the connection details for your PureLink by Dtrovision switcher.",
+        "description": "Enter the connection details for your PureLink switcher.",
         "data": {
           "host": "IP Address or Hostname",
           "port": "TCP Port",

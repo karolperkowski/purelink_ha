@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Home Assistant custom integration for the **PureLink by Dtrovision** AV matrix switcher (UX series). Enables routing of video inputs to outputs via HA `select` entities, with automatic state polling over TCP.
+Home Assistant custom integration for the **PureLink** AV matrix switcher (UX series). Enables routing of video inputs to outputs via HA `select` entities, with automatic state polling over TCP.
 
 ## Directory Layout
 

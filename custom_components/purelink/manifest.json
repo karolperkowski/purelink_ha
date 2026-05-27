@@ -1,6 +1,6 @@
 {
   "domain": "purelink",
-  "name": "PureLink by Dtrovision",
+  "name": "PureLink",
   "codeowners": ["@karolperkowski"],
   "config_flow": true,
   "documentation": "https://github.com/karolperkowski/purelink_ha",
