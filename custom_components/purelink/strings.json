@@ -3,18 +3,25 @@
     "step": {
       "user": {
         "title": "Set up PureLink Matrix Switcher",
-        "description": "Enter the connection details for your PureLink switcher.",
+        "description": "Enter the connection details for your PureLink switcher. The matrix size is detected automatically in the next step.",
         "data": {
           "host": "IP Address or Hostname",
           "port": "TCP Port",
-          "switcher_id": "Switcher ID",
+          "switcher_id": "Switcher ID"
+        }
+      },
+      "ports": {
+        "title": "Confirm matrix size",
+        "description": "Detected {detected} outputs from the switcher's status reply. Confirm or adjust the port counts below.",
+        "data": {
           "num_inputs": "Number of Inputs",
           "num_outputs": "Number of Outputs"
         }
       }
     },
     "error": {
-      "cannot_connect": "Cannot connect to the switcher. Check the IP address, port, and that the device is powered on."
+      "cannot_connect": "Cannot connect to the switcher. Check the IP address, port, and that the device is powered on.",
+      "unknown": "Unexpected error while probing the switcher. Check the Home Assistant logs."
     },
     "abort": {
       "already_configured": "This switcher is already configured."

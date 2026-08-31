@@ -48,8 +48,10 @@ Any PureLink / Dtrovision matrix switcher with a LAN port that accepts the ASCII
 | IP Address / Hostname | Device LAN IP or hostname | — |
 | TCP Port | Device port (telnet; check Network Settings in device web UI if non-standard) | `23` |
 | Switcher ID | Device switcher ID (see device settings) | `255` |
-| Number of Inputs | How many input ports your switcher has | — |
-| Number of Outputs | How many output ports your switcher has | — |
+
+4. Confirm the matrix size. The number of outputs is detected automatically
+   from the switcher's status reply (UX matrices are square, so inputs default
+   to the same count); adjust only if your model differs.
 
 ## Entities
 
