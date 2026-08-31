@@ -38,6 +38,11 @@ async def async_setup_entry(
     host: str = entry.data[CONF_HOST]
     switcher_id: int = entry.data[CONF_SWITCHER_ID]
 
+    if num_outputs < 1 or num_inputs < 1:
+        # select.py logs the actionable warning for this misconfiguration;
+        # skip quietly here to avoid a duplicate log line.
+        return
+
     async_add_entities(
         PureLinkOutputMediaPlayer(
             coordinator=coordinator,

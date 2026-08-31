@@ -19,13 +19,21 @@ from .purelink_client import PureLinkClient
 
 _LOGGER = logging.getLogger(__name__)
 
+# Port counts must be >= 1: a 0 slipping through creates a hub with zero
+# entities and no device, silently (observed in the field with a UX-8800).
+_PORT_COUNT = vol.All(vol.Coerce(int), vol.Range(min=1, max=64))
+
 _STEP_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
-        vol.Optional(CONF_PORT, default=DEFAULT_PORT): int,
-        vol.Optional(CONF_SWITCHER_ID, default=DEFAULT_SWITCHER_ID): int,
-        vol.Required(CONF_NUM_INPUTS): int,
-        vol.Required(CONF_NUM_OUTPUTS): int,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): vol.All(
+            vol.Coerce(int), vol.Range(min=1, max=65535)
+        ),
+        vol.Optional(CONF_SWITCHER_ID, default=DEFAULT_SWITCHER_ID): vol.All(
+            vol.Coerce(int), vol.Range(min=0, max=999)
+        ),
+        vol.Required(CONF_NUM_INPUTS): _PORT_COUNT,
+        vol.Required(CONF_NUM_OUTPUTS): _PORT_COUNT,
     }
 )
 

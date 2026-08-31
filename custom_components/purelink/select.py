@@ -34,6 +34,19 @@ async def async_setup_entry(
     host: str = entry.data[CONF_HOST]
     switcher_id: int = entry.data[CONF_SWITCHER_ID]
 
+    if num_outputs < 1 or num_inputs < 1:
+        # Entries created before the config flow validated port counts can
+        # carry 0 here, which yields a hub with no entities and no device.
+        _LOGGER.warning(
+            "PureLink entry for %s is configured with %d inputs / %d outputs; "
+            "no entities will be created. Remove and re-add the hub with the "
+            "correct port counts",
+            host,
+            num_inputs,
+            num_outputs,
+        )
+        return
+
     async_add_entities(
         PureLinkOutputSelect(
             coordinator=coordinator,
