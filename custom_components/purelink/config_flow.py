@@ -46,7 +46,7 @@ class PureLinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
             try:
                 await client.connect()
-                ok = await client.heartbeat()
+                ok = await client.is_alive()
                 await client.disconnect()
             except (OSError, asyncio.TimeoutError):
                 errors["base"] = "cannot_connect"

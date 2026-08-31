@@ -108,6 +108,18 @@ class PureLinkClient:
             _LOGGER.debug("PureLink heartbeat failed: %s", err)
             return False
 
+    async def is_alive(self) -> bool:
+        # Liveness probe via the status query. Some models (verified on a
+        # UX-8800, fw CT-V1.4.2) reject the H000 heartbeat with
+        # "Command Code Error" while answering *?C! normally, so the status
+        # query is the reliable cross-model probe.
+        try:
+            await self.query_status()
+        except Exception as err:
+            _LOGGER.debug("PureLink liveness probe failed: %s", err)
+            return False
+        return True
+
     async def query_status(self) -> dict[int, int]:
         cmd = CMD_STATUS_ALL.format(sid=self._sid)
         raw = await self._send_raw(cmd)

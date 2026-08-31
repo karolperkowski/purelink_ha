@@ -25,7 +25,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     try:
         await client.connect()
-        alive = await client.heartbeat()
+        alive = await client.is_alive()
     except (OSError, asyncio.TimeoutError) as err:
         raise ConfigEntryNotReady(
             f"Cannot connect to PureLink at {host}:{port}"
@@ -33,7 +33,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if not alive:
         await client.disconnect()
-        raise ConfigEntryNotReady(f"PureLink at {host}:{port} did not respond to heartbeat")
+        raise ConfigEntryNotReady(
+            f"PureLink at {host}:{port} did not respond to status query"
+        )
 
     coordinator = PureLinkCoordinator(hass, client, num_outputs)
     await coordinator.async_config_entry_first_refresh()
