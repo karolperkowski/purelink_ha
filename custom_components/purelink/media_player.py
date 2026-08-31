@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.components.select import SelectEntity
+from homeassistant.components.media_player import (
+    MediaPlayerDeviceClass,
+    MediaPlayerEntity,
+    MediaPlayerEntityFeature,
+    MediaPlayerState,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
@@ -14,7 +19,6 @@ from .const import (
     CONF_NUM_INPUTS,
     CONF_NUM_OUTPUTS,
     CONF_SWITCHER_ID,
-    DISCONNECTED_LABEL,
     DOMAIN,
 )
 from .coordinator import PureLinkCoordinator
@@ -35,7 +39,7 @@ async def async_setup_entry(
     switcher_id: int = entry.data[CONF_SWITCHER_ID]
 
     async_add_entities(
-        PureLinkOutputSelect(
+        PureLinkOutputMediaPlayer(
             coordinator=coordinator,
             output_num=out,
             num_inputs=num_inputs,
@@ -47,8 +51,16 @@ async def async_setup_entry(
     )
 
 
-class PureLinkOutputSelect(CoordinatorEntity[PureLinkCoordinator], SelectEntity):
+class PureLinkOutputMediaPlayer(
+    CoordinatorEntity[PureLinkCoordinator], MediaPlayerEntity
+):
     _attr_has_entity_name = True
+    _attr_device_class = MediaPlayerDeviceClass.RECEIVER
+    _attr_supported_features = (
+        MediaPlayerEntityFeature.SELECT_SOURCE
+        | MediaPlayerEntityFeature.TURN_ON
+        | MediaPlayerEntityFeature.TURN_OFF
+    )
 
     def __init__(
         self,
@@ -61,13 +73,12 @@ class PureLinkOutputSelect(CoordinatorEntity[PureLinkCoordinator], SelectEntity)
     ) -> None:
         super().__init__(coordinator)
         self._output_num = output_num
-        # "source" suffix distinguishes this from the media_player entity for
-        # the same output; the unique_id predates media_player and is unchanged.
-        self._attr_name = f"Output {output_num} source"
-        self._attr_unique_id = f"purelink_{host}_{switcher_id}_output_{output_num}"
-        self._attr_options = [DISCONNECTED_LABEL] + [
-            f"Input {i}" for i in range(1, num_inputs + 1)
-        ]
+        self._last_input = 1
+        self._attr_name = f"Output {output_num}"
+        self._attr_unique_id = (
+            f"purelink_{host}_{switcher_id}_output_{output_num}_media_player"
+        )
+        self._attr_source_list = [f"Input {i}" for i in range(1, num_inputs + 1)]
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"{host}_{switcher_id}")},
             name=f"PureLink Switcher ({host})",
@@ -75,19 +86,41 @@ class PureLinkOutputSelect(CoordinatorEntity[PureLinkCoordinator], SelectEntity)
             model="PureLink Matrix Switcher",
         )
 
+    def _current_input(self) -> int:
+        if self.coordinator.data is None:
+            return 0
+        return self.coordinator.data.get(self._output_num, 0)
+
     @property
-    def current_option(self) -> str | None:
+    def state(self) -> MediaPlayerState | None:
         if self.coordinator.data is None:
             return None
-        inp = self.coordinator.data.get(self._output_num, 0)
+        if self._current_input():
+            return MediaPlayerState.ON
+        return MediaPlayerState.OFF
+
+    @property
+    def source(self) -> str | None:
+        inp = self._current_input()
         if inp == 0:
-            return DISCONNECTED_LABEL
+            return None
         return f"Input {inp}"
 
-    async def async_select_option(self, option: str) -> None:
-        if option == DISCONNECTED_LABEL:
-            await self.coordinator.client.disconnect_output(self._output_num)
-        else:
-            inp = int(option.split()[-1])
-            await self.coordinator.client.connect_input_to_output(inp, self._output_num)
+    async def async_select_source(self, source: str) -> None:
+        inp = int(source.split()[-1])
+        self._last_input = inp
+        await self.coordinator.client.connect_input_to_output(inp, self._output_num)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self) -> None:
+        inp = self._current_input()
+        if inp:
+            self._last_input = inp
+        await self.coordinator.client.disconnect_output(self._output_num)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_on(self) -> None:
+        await self.coordinator.client.connect_input_to_output(
+            self._last_input, self._output_num
+        )
         await self.coordinator.async_request_refresh()

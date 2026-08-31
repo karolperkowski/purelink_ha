@@ -20,4 +20,4 @@ RESP_ERROR_SWITCHER = "Switcher ID Error"
 
 DISCONNECTED_LABEL = "Disconnected"
 
-PLATFORMS = ["select"]
+PLATFORMS = ["media_player", "select"]

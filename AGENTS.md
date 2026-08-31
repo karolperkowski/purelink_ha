@@ -12,6 +12,7 @@ custom_components/purelink/   ← HA integration package
   const.py                    ← all constants and command templates
   purelink_client.py          ← async TCP client (asyncio StreamReader/Writer)
   coordinator.py              ← DataUpdateCoordinator (polls every 30s)
+  media_player.py             ← MediaPlayerEntity per output port (source picker + on/off)
   select.py                   ← SelectEntity per output port
   __init__.py                 ← async_setup_entry / async_unload_entry
   config_flow.py              ← UI config flow (host/port/switcher_id/inputs/outputs)
@@ -49,7 +50,8 @@ gh run watch --exit-status      # CI green = done
 Quick checks without HA running:
 
 ```bash
-# Heartbeat
+# Heartbeat (NOTE: UX-8800 fw CT-V1.4.2 rejects H000 with "Command Code Error";
+# the integration probes liveness with the ?C status query instead)
 echo -ne "*255H000!\r\n" | nc <device_ip> 23
 
 # Query all connections

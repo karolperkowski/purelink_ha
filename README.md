@@ -4,7 +4,8 @@ A Home Assistant custom integration for **PureLink** AV matrix switchers (UX ser
 
 ## Features
 
-- Route any input to any output via a drop-down selector
+- Route any input to any output via a drop-down selector or media player card
+- `media_player` entity per output (source picker + on/off = connect/disconnect)
 - Automatic state polling every 30 seconds
 - Instant state update after routing changes
 - Connection error handling with automatic reconnect
@@ -52,15 +53,12 @@ Any PureLink / Dtrovision matrix switcher with a LAN port that accepts the ASCII
 
 ## Entities
 
-One `select` entity is created per output port. For a 4×4 switcher:
+Two entities are created per output port — use whichever fits your dashboard:
 
-| Entity | Options |
+| Entity | Behaviour |
 |---|---|
-| `select.purelink_output_1` | Disconnected, Input 1, Input 2, Input 3, Input 4 |
-| `select.purelink_output_2` | Disconnected, Input 1, Input 2, Input 3, Input 4 |
-| … | … |
-
-Selecting an input routes the signal. Selecting **Disconnected** severs the connection.
+| `media_player.purelink_..._output_n` | Source picker routes an input; **off** disconnects the output, **on** restores the last input. |
+| `select.purelink_..._output_n` | Options: Disconnected, Input 1 … Input N. Selecting an input routes the signal; **Disconnected** severs the connection. |
 
 ## Troubleshooting
 
@@ -68,6 +66,8 @@ Selecting an input routes the signal. Selecting **Disconnected** severs the conn
 - Verify the device IP and port with `nc <ip> <port>` (or telnet)
 - Check the device is powered on and LAN connected
 - Confirm the Switcher ID matches the device setting (default 255)
+- Setup probes the device with the `*<id>?C!` status query (some models,
+  e.g. the UX-8800, reject the H000 heartbeat while answering `?C` normally)
 
 **Entities show as unavailable**
 - HA lost the TCP connection; it will reconnect automatically on the next poll
