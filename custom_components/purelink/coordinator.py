@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from datetime import timedelta
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -16,13 +17,18 @@ class PureLinkCoordinator(DataUpdateCoordinator[dict[int, int]]):
     def __init__(
         self,
         hass: HomeAssistant,
+        entry: ConfigEntry,
         client: PureLinkClient,
         num_outputs: int,
     ) -> None:
+        # config_entry must be passed explicitly: HA 2026.8 removed the
+        # ContextVar fallback, which made entry setup fail silently on
+        # 2026.8+ (entry loads, no devices/entities).
         super().__init__(
             hass,
             _LOGGER,
             name=DOMAIN,
+            config_entry=entry,
             update_interval=timedelta(seconds=DEFAULT_POLL_INTERVAL),
         )
         self.client = client

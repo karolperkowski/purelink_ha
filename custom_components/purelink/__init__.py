@@ -37,7 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             f"PureLink at {host}:{port} did not respond to status query"
         )
 
-    coordinator = PureLinkCoordinator(hass, client, num_outputs)
+    coordinator = PureLinkCoordinator(hass, entry, client, num_outputs)
     await coordinator.async_config_entry_first_refresh()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
