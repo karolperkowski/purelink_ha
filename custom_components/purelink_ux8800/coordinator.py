@@ -105,3 +105,8 @@ class UX8800Coordinator(DataUpdateCoordinator[MatrixState]):
         """Rename an input or output on the device."""
         await self.client.async_set_name(kind, index, name)
         self.async_set_updated_data(self.client.state)
+
+    async def async_set_edid(self, input_index: int, mode: int) -> None:
+        """Assign an EDID mode to an input."""
+        await self.client.async_set_edid(input_index, mode)
+        self.async_set_updated_data(self.client.state)

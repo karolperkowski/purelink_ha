@@ -12,17 +12,20 @@ from homeassistant.helpers import device_registry as dr
 from .client import PureLinkError
 from .const import (
     ATTR_INPUT,
+    ATTR_MODE,
     ATTR_NAME,
     ATTR_OUTPUT,
     ATTR_PRESET,
     ATTR_SLOT,
     DOMAIN,
+    EDID_MODE_COUNT,
     MATRIX_SIZE,
     PRESET_COUNT,
     SERVICE_RECALL_PRESET,
     SERVICE_ROUTE,
     SERVICE_ROUTE_ALL,
     SERVICE_SAVE_PRESET,
+    SERVICE_SET_EDID,
     SERVICE_SET_INPUT_NAME,
     SERVICE_SET_OUTPUT_NAME,
 )
@@ -43,6 +46,8 @@ RECALL_SCHEMA = vol.Schema({**_BASE, vol.Required(ATTR_PRESET): vol.Any(_SLOT, c
 SAVE_SCHEMA = vol.Schema({**_BASE, vol.Required(ATTR_SLOT): _SLOT, vol.Required(ATTR_NAME): _NAME})
 SET_INPUT_NAME_SCHEMA = vol.Schema({**_BASE, vol.Required(ATTR_INPUT): _OUTPUT, vol.Required(ATTR_NAME): _NAME})
 SET_OUTPUT_NAME_SCHEMA = vol.Schema({**_BASE, vol.Required(ATTR_OUTPUT): _OUTPUT, vol.Required(ATTR_NAME): _NAME})
+_MODE = vol.Any(vol.All(vol.Coerce(int), vol.Range(min=1, max=EDID_MODE_COUNT)), cv.string)
+SET_EDID_SCHEMA = vol.Schema({**_BASE, vol.Required(ATTR_INPUT): _OUTPUT, vol.Required(ATTR_MODE): _MODE})
 
 
 def _loaded_coordinators(hass: HomeAssistant) -> list[UX8800Coordinator]:
@@ -94,6 +99,18 @@ def _resolve_preset(coordinator: UX8800Coordinator, value: str | int) -> int:
     raise ServiceValidationError(f"Unknown preset: {value}")
 
 
+def _resolve_edid_mode(coordinator: UX8800Coordinator, value: str | int) -> int:
+    """Accept an EDID mode number or a mode label and return the mode index."""
+    if isinstance(value, int):
+        mode: int | None = value
+    else:
+        text = str(value).strip()
+        mode = int(text) if text.isdigit() else coordinator.client.state.edid_mode_for_label(text)
+    if mode is None or mode not in coordinator.client.state.edid_list:
+        raise ServiceValidationError(f"Unknown EDID mode: {value}")
+    return mode
+
+
 async def _run(awaitable) -> None:
     """Await a device operation, mapping device errors to HomeAssistantError."""
     try:
@@ -132,9 +149,15 @@ def async_setup_services(hass: HomeAssistant) -> None:
         coordinator = _resolve(hass, call)
         await _run(coordinator.async_set_name("output", call.data[ATTR_OUTPUT], call.data[ATTR_NAME]))
 
+    async def _set_edid(call: ServiceCall) -> None:
+        coordinator = _resolve(hass, call)
+        mode = _resolve_edid_mode(coordinator, call.data[ATTR_MODE])
+        await _run(coordinator.async_set_edid(call.data[ATTR_INPUT], mode))
+
     hass.services.async_register(DOMAIN, SERVICE_ROUTE, _route, schema=ROUTE_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_ROUTE_ALL, _route_all, schema=ROUTE_ALL_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_RECALL_PRESET, _recall_preset, schema=RECALL_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_SAVE_PRESET, _save_preset, schema=SAVE_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_SET_INPUT_NAME, _set_input_name, schema=SET_INPUT_NAME_SCHEMA)
     hass.services.async_register(DOMAIN, SERVICE_SET_OUTPUT_NAME, _set_output_name, schema=SET_OUTPUT_NAME_SCHEMA)
+    hass.services.async_register(DOMAIN, SERVICE_SET_EDID, _set_edid, schema=SET_EDID_SCHEMA)

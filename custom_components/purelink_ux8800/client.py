@@ -92,6 +92,10 @@ class MatrixState:
     master_volume: int | None = None
     sw_version: str | None = None
     web_version: str | None = None
+    # EDID: available modes (index 1..N -> label) and current per-input EDID
+    # description as reported by the device.
+    edid_list: dict[int, str] = field(default_factory=dict)
+    edid_current: dict[int, str] = field(default_factory=dict)
 
     def input_name(self, index: int) -> str:
         """Return a display name for an input, falling back to ``IN n``."""
@@ -129,6 +133,26 @@ class MatrixState:
     def input_for_label(self, label: str) -> int | None:
         """Return the input index for a given unique source label."""
         for idx, lbl in self.source_options():
+            if lbl == label:
+                return idx
+        return None
+
+    def edid_options(self) -> list[tuple[int, str]]:
+        """Return ``[(mode_index, label), ...]`` of assignable EDID modes."""
+        return [
+            (idx, label)
+            for idx, label in sorted(self.edid_list.items())
+            if label.strip().upper() != "END"
+        ]
+
+    def edid_label_for_mode(self, mode: int) -> str | None:
+        """Return the label for an EDID mode index."""
+        label = self.edid_list.get(mode)
+        return label if label and label.strip().upper() != "END" else None
+
+    def edid_mode_for_label(self, label: str) -> int | None:
+        """Return the EDID mode index for a label."""
+        for idx, lbl in self.edid_options():
             if lbl == label:
                 return idx
         return None
@@ -234,6 +258,7 @@ class PureLinkClient:
             await self.async_request_all()
             await self.async_refresh_info()
             await self.async_refresh_presets()
+            await self.async_refresh_edid()
             await self.async_refresh_volume()
             await self._async_refresh_versions()
         except PureLinkError:
@@ -363,6 +388,9 @@ class PureLinkClient:
             elif any(k.startswith("presetname") for k in frame):
                 self._apply_presets(frame)
                 self._resolve("preset")
+            elif any(k.startswith("edidlist") for k in frame):
+                self._apply_edid(frame)
+                self._resolve("edid")
             elif any(k.endswith("data1") for k in frame):  # inNdata1 / outNdata1
                 self._apply_info(frame)
                 self._resolve("info")
@@ -441,6 +469,19 @@ class PureLinkClient:
             self.state.sw_version = ver
         if (web := frame.get("verwebui")) is not None:
             self.state.web_version = web
+
+    def _apply_edid(self, frame: Mapping[str, str]) -> None:
+        # edidlist<N> are assignable modes (an "END" entry marks the terminator);
+        # edid<1..8> is the current EDID description per input.
+        for key, label in frame.items():
+            if key.startswith("edidlist") and key[8:].isdigit():
+                if label.strip().upper() == "END":
+                    continue
+                self.state.edid_list[int(key[8:])] = label
+        for j in range(1, MATRIX_SIZE + 1):
+            if (cur := frame.get(f"edid{j}")) is not None:
+                self.state.edid_current[j] = cur
+        self._apply_names_only(frame)
 
     # -- request/response correlation ----------------------------------------
 
@@ -521,6 +562,12 @@ class PureLinkClient:
             "volume", "<command type='inquery' name='MasterVolume'>main</command>"
         )
 
+    async def async_refresh_edid(self) -> None:
+        """Fetch the EDID mode list and current per-input EDID descriptions."""
+        await self._request(
+            "edid", "<command type='inquery' name='edid'>edid</command>"
+        )
+
     async def _async_refresh_versions(self) -> None:
         """Fetch firmware versions once (from the sensitive ``setting`` frame)."""
         try:
@@ -594,6 +641,27 @@ class PureLinkClient:
         )
         await asyncio.sleep(ROUTE_SETTLE)
         await self.async_request_all()
+
+    async def async_set_edid(self, input_index: int, mode: int) -> None:
+        """Assign EDID ``mode`` to ``input_index`` (1..8).
+
+        The web UI wraps a raw ASCII command inside ``senddata``:
+        ``*777EL{mode:02d}I{input:02d}!``. We then trigger an ``edid_refresh``
+        and re-read the EDID table.
+        """
+        if not 1 <= input_index <= MATRIX_SIZE:
+            raise ValueError(f"input out of range: {input_index}")
+        if mode not in self.state.edid_list:
+            raise ValueError(f"unknown EDID mode: {mode}")
+        sdata = f"*777EL{mode:02d}I{input_index:02d}!"
+        await self._send(_build_command("update", "senddata", "temp", data=sdata))
+        await asyncio.sleep(ROUTE_SETTLE)
+        await self._send(
+            f"<command type='update' name='edid_refresh' "
+            f"id='{input_index:02d}'>temp</command>"
+        )
+        await asyncio.sleep(ROUTE_SETTLE)
+        await self.async_refresh_edid()
 
     async def async_save_preset(
         self, slot: int, name: str, routing: Mapping[int, int] | None = None

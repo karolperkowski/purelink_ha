@@ -46,6 +46,10 @@ SERVICE_RECALL_PRESET: Final = "recall_preset"
 SERVICE_SAVE_PRESET: Final = "save_preset"
 SERVICE_SET_INPUT_NAME: Final = "set_input_name"
 SERVICE_SET_OUTPUT_NAME: Final = "set_output_name"
+SERVICE_SET_EDID: Final = "set_edid"
+
+# Number of assignable EDID modes (edidlist entries before the END marker).
+EDID_MODE_COUNT: Final = 27
 
 # Service fields.
 ATTR_INPUT: Final = "input"
@@ -54,3 +58,4 @@ ATTR_PRESET: Final = "preset"
 ATTR_SLOT: Final = "slot"
 ATTR_NAME: Final = "name"
 ATTR_ROUTING: Final = "routing"
+ATTR_MODE: Final = "mode"

@@ -19,8 +19,10 @@ diagnostics — all over the device's local WebSocket control channel.
 - **Diagnostics** — per-input signal-present (`binary_sensor`), input resolution
   and HDCP (`sensor`), per-output sync resolution, and the read-only master
   volume.
+- **EDID** — assign any of the 27 EDID modes per input, via a config `select`
+  (disabled by default) or the `set_edid` service.
 - **Services** — `route`, `route_all`, `recall_preset`, `save_preset`,
-  `set_input_name`, `set_output_name`.
+  `set_input_name`, `set_output_name`, `set_edid`.
 
 ## How it works
 
@@ -74,6 +76,7 @@ Options (⚙ on the integration): **routing poll interval** (default 3 s) and
 | `purelink_ux8800.save_preset` | Save the current routing into a preset slot. |
 | `purelink_ux8800.set_input_name` | Rename an input (≤ 8 characters). |
 | `purelink_ux8800.set_output_name` | Rename an output (≤ 8 characters). |
+| `purelink_ux8800.set_edid` | Assign an EDID mode (1-27, or its label) to an input. |
 
 Example:
 
@@ -88,8 +91,10 @@ data:
 
 - **Master volume is read-only.** The web UI exposes no volume-set command, so
   it is surfaced as a sensor only.
-- **EDID management** (assigning EDID modes per input) is not yet included; it is
-  planned for a future release.
+- **EDID selects are optimistic.** The device does not report which EDID mode is
+  active (only a free-text description, exposed as the `current_edid` attribute),
+  so the EDID `select` shows the last mode set from Home Assistant. Changing EDID
+  can briefly interrupt a connected source.
 - Names are limited to **8 characters** by the device.
 - Because the device does not push state, changes made at the front panel are
   reflected after the next poll (a few seconds).

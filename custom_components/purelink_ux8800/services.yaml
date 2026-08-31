@@ -113,3 +113,24 @@ set_output_name:
       example: "TV1"
       selector:
         text:
+
+set_edid:
+  fields:
+    device_id:
+      required: false
+      selector:
+        device:
+          integration: purelink_ux8800
+    input:
+      required: true
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 8
+          mode: box
+    mode:
+      required: true
+      example: 14
+      selector:
+        text:

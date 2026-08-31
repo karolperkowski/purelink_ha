@@ -160,6 +160,24 @@
           "description": "New name (up to 8 characters)."
         }
       }
+    },
+    "set_edid": {
+      "name": "Set EDID",
+      "description": "Assign an EDID mode to an input. Changing EDID can briefly interrupt a connected source.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The matrix to control (only needed if you have more than one)."
+        },
+        "input": {
+          "name": "Input",
+          "description": "Input number (1-8)."
+        },
+        "mode": {
+          "name": "EDID mode",
+          "description": "EDID mode number (1-27) or its label."
+        }
+      }
     }
   }
 }

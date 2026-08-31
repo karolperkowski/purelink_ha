@@ -110,6 +110,21 @@ def test_mastervolume(client: PureLinkClient) -> None:
     assert client.state.master_volume == 10
 
 
+def test_parse_edid(client: PureLinkClient) -> None:
+    _dispatch(
+        client,
+        '<Update edidlist1="1. 1080p, DVI" edidlist2="2. 1080p, LPCM 2CH" '
+        'edidlist27="27.Edid Merge" edidlist28="END" '
+        'edid1="1920x1080@60[PUR],LPCM 2CH" edid4="1920x1080@60[PUR],DVI" '
+        'inname1="CABLE" name="update">done</Update>',
+    )
+    opts = dict(client.state.edid_options())
+    assert opts[1] == "1. 1080p, DVI"
+    assert 28 not in client.state.edid_list  # END terminator excluded
+    assert client.state.edid_mode_for_label("27.Edid Merge") == 27
+    assert client.state.edid_current[4] == "1920x1080@60[PUR],DVI"
+
+
 def test_build_command_escaping() -> None:
     frame = _build_command("update", "GetNames", "temp", data="A&B", kind="input", id="1")
     assert 'name="GetNames"' in frame
