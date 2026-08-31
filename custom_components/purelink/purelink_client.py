@@ -11,6 +11,7 @@ from .const import (
     CMD_DISCONNECT_TEMPLATE,
     CMD_HEARTBEAT,
     CMD_STATUS_ALL,
+    CMD_VERSION,
     DEFAULT_TIMEOUT,
     RESP_ERROR_COMMAND,
     RESP_ERROR_SWITCHER,
@@ -19,6 +20,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 _STATUS_TOKEN_RE = re.compile(r"I(\d{2,})O(\d{2,})", re.IGNORECASE)
+_VERSION_RE = re.compile(r"\?VERSIONCT:([^!]+)", re.IGNORECASE)
 
 
 class PureLinkClient:
@@ -124,6 +126,13 @@ class PureLinkClient:
         cmd = CMD_STATUS_ALL.format(sid=self._sid)
         raw = await self._send_raw(cmd)
         return self._parse_status_response(raw)
+
+    async def query_version(self) -> Optional[str]:
+        """Return the controller firmware version, or None if unsupported."""
+        cmd = CMD_VERSION.format(sid=self._sid)
+        raw = await self._send_raw(cmd)
+        match = _VERSION_RE.search(raw)
+        return match.group(1).strip() if match else None
 
     async def connect_input_to_output(self, input_num: int, output_num: int) -> bool:
         cmd = CMD_CONNECT_TEMPLATE.format(sid=self._sid, inp=input_num, out=output_num)

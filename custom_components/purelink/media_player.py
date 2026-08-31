@@ -11,6 +11,7 @@ from homeassistant.components.media_player import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -19,9 +20,13 @@ from .const import (
     CONF_NUM_INPUTS,
     CONF_NUM_OUTPUTS,
     CONF_SWITCHER_ID,
+    DISCONNECTED_LABEL,
     DOMAIN,
+    INPUT_LABEL_TEMPLATE,
+    OUTPUT_LABEL_TEMPLATE,
 )
 from .coordinator import PureLinkCoordinator
+from .purelink_names import build_labels
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,14 +48,27 @@ async def async_setup_entry(
         # skip quietly here to avoid a duplicate log line.
         return
 
+    # Reserve DISCONNECTED_LABEL here too so both platforms agree on labels.
+    input_labels = build_labels(
+        data["input_names"],
+        num_inputs,
+        INPUT_LABEL_TEMPLATE,
+        reserved=frozenset({DISCONNECTED_LABEL}),
+    )
+    output_labels = build_labels(
+        data["output_names"], num_outputs, OUTPUT_LABEL_TEMPLATE
+    )
+
     async_add_entities(
         PureLinkOutputMediaPlayer(
             coordinator=coordinator,
             output_num=out,
-            num_inputs=num_inputs,
+            output_label=output_labels[out],
+            input_labels=input_labels,
             entry_id=entry.entry_id,
             switcher_id=switcher_id,
             host=host,
+            sw_version=data["sw_version"],
         )
         for out in range(1, num_outputs + 1)
     )
@@ -71,24 +89,29 @@ class PureLinkOutputMediaPlayer(
         self,
         coordinator: PureLinkCoordinator,
         output_num: int,
-        num_inputs: int,
+        output_label: str,
+        input_labels: dict[int, str],
         entry_id: str,
         switcher_id: int,
         host: str,
+        sw_version: str | None,
     ) -> None:
         super().__init__(coordinator)
         self._output_num = output_num
         self._last_input = 1
-        self._attr_name = f"Output {output_num}"
+        self._input_labels = input_labels
+        self._label_to_input = {label: num for num, label in input_labels.items()}
+        self._attr_name = output_label
         self._attr_unique_id = (
             f"purelink_{host}_{switcher_id}_output_{output_num}_media_player"
         )
-        self._attr_source_list = [f"Input {i}" for i in range(1, num_inputs + 1)]
+        self._attr_source_list = [input_labels[i] for i in sorted(input_labels)]
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"{host}_{switcher_id}")},
             name=f"PureLink Switcher ({host})",
             manufacturer="Dtrovision",
             model="PureLink Matrix Switcher",
+            sw_version=sw_version,
         )
 
     def _current_input(self) -> int:
@@ -109,10 +132,18 @@ class PureLinkOutputMediaPlayer(
         inp = self._current_input()
         if inp == 0:
             return None
-        return f"Input {inp}"
+        return self._input_labels.get(inp, INPUT_LABEL_TEMPLATE.format(n=inp))
 
     async def async_select_source(self, source: str) -> None:
-        inp = int(source.split()[-1])
+        # Unlike select, core does not validate select_source against the
+        # source list, so scripts can pass stale names (e.g. "Input 3" written
+        # before name sync); surface a clean error instead of a KeyError.
+        inp = self._label_to_input.get(source)
+        if inp is None:
+            raise ServiceValidationError(
+                f"Unknown source {source!r}; valid sources: "
+                f"{', '.join(self._attr_source_list or [])}"
+            )
         self._last_input = inp
         await self.coordinator.client.connect_input_to_output(inp, self._output_num)
         await self.coordinator.async_request_refresh()

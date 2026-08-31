@@ -48,10 +48,16 @@ Any PureLink / Dtrovision matrix switcher with a LAN port that accepts the ASCII
 | IP Address / Hostname | Device LAN IP or hostname | — |
 | TCP Port | Device port (telnet; check Network Settings in device web UI if non-standard) | `23` |
 | Switcher ID | Device switcher ID (see device settings) | `255` |
+| Web UI Username / Password | Optional. When provided, entities are named after the input/output names configured on the switcher (e.g. `TV1`, `CABLE`) instead of `Output 1` / `Input 1`. | empty |
 
 4. Confirm the matrix size. The number of outputs is detected automatically
    from the switcher's status reply (UX matrices are square, so inputs default
    to the same count); adjust only if your model differs.
+
+Device-side names are read once per (re)start of the integration — after
+renaming ports in the switcher's web UI, reload the integration to pick the
+new names up. Without credentials, entities use generic names that you can
+rename in Home Assistant.
 
 ## Entities
 

@@ -72,6 +72,19 @@ For repeatable diagnostics, use `python tools/diagnose.py --host <ip> status|dum
 - `_attr_has_entity_name = True` + `DeviceInfo` for clean entity naming
 - No third-party runtime dependencies — pure stdlib `asyncio` TCP client
 
+### Optional name sync (`purelink_names.py`)
+
+The Telnet/ASCII protocol has no names query (confirmed against the official
+UX Series manual, section 4.x command tables), so user-assigned port names are
+fetched from the switcher's web UI websocket (`ws://<host>:8887`, XML frames:
+greeting → login → `requestall_main` → `setall` with `innameN`/`outnameN`).
+This uses `aiohttp` via `homeassistant.helpers.aiohttp_client` — aiohttp ships
+with HA core, so `manifest.json::requirements` stays `[]` and the
+no-third-party-deps rule is upheld. The fetch is one-shot at entry setup,
+optional (credentials may be left empty), and tolerant: any failure logs a
+warning and entities fall back to generic `Input N` / `Output N` labels.
+Names refresh on reload/restart, not live.
+
 ## Release Process
 
 Releases are tag-driven. The release workflow asserts the tag matches `manifest.json::version`.

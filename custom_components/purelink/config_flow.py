@@ -5,7 +5,8 @@ import logging
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PORT, CONF_USERNAME
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
     CONF_NUM_INPUTS,
@@ -16,6 +17,11 @@ from .const import (
     DOMAIN,
 )
 from .purelink_client import PureLinkClient
+from .purelink_names import (
+    PureLinkAuthError,
+    PureLinkNamesError,
+    async_fetch_names,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -32,6 +38,10 @@ _USER_SCHEMA = vol.Schema(
         vol.Optional(CONF_SWITCHER_ID, default=DEFAULT_SWITCHER_ID): vol.All(
             vol.Coerce(int), vol.Range(min=0, max=999)
         ),
+        # Optional web UI credentials: when provided, the integration reads the
+        # user-assigned port names (the Telnet protocol has no names query).
+        vol.Optional(CONF_USERNAME, default=""): str,
+        vol.Optional(CONF_PASSWORD, default=""): str,
     }
 )
 
@@ -94,6 +104,27 @@ class PureLinkConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # fall through with the most common size prefilled; the user
                 # confirms or corrects it on the next step.
                 detected = 8
+
+            # Bad web UI credentials block the flow (certain user error);
+            # any other names failure is tolerated here and again at setup.
+            username = user_input.get(CONF_USERNAME, "")
+            password = user_input.get(CONF_PASSWORD, "")
+            if not errors and username and password:
+                try:
+                    await async_fetch_names(
+                        async_get_clientsession(self.hass),
+                        user_input[CONF_HOST],
+                        username,
+                        password,
+                    )
+                except PureLinkAuthError:
+                    errors["base"] = "invalid_auth"
+                except PureLinkNamesError as err:
+                    _LOGGER.warning(
+                        "Could not verify web UI credentials (%s); "
+                        "continuing without names",
+                        err,
+                    )
 
             if not errors:
                 await self.async_set_unique_id(

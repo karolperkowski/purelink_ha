@@ -3,11 +3,13 @@
     "step": {
       "user": {
         "title": "Set up PureLink Matrix Switcher",
-        "description": "Enter the connection details for your PureLink switcher. The matrix size is detected automatically in the next step.",
+        "description": "Enter the connection details for your PureLink switcher. The matrix size is detected automatically in the next step. Web UI credentials are optional: when provided, entities use the input/output names configured on the switcher.",
         "data": {
           "host": "IP Address or Hostname",
           "port": "TCP Port",
-          "switcher_id": "Switcher ID"
+          "switcher_id": "Switcher ID",
+          "username": "Web UI Username (optional)",
+          "password": "Web UI Password (optional)"
         }
       },
       "ports": {
@@ -21,6 +23,7 @@
     },
     "error": {
       "cannot_connect": "Cannot connect to the switcher. Check the IP address, port, and that the device is powered on.",
+      "invalid_auth": "The switcher's web UI rejected these credentials. Check the username and password, or leave both empty to skip name sync.",
       "unknown": "Unexpected error while probing the switcher. Check the Home Assistant logs."
     },
     "abort": {
