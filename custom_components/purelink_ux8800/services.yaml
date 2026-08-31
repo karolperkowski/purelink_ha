@@ -1,0 +1,115 @@
+route:
+  fields:
+    device_id:
+      required: false
+      selector:
+        device:
+          integration: purelink_ux8800
+    output:
+      required: true
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 8
+          mode: box
+    input:
+      required: true
+      example: 3
+      selector:
+        number:
+          min: 0
+          max: 8
+          mode: box
+
+route_all:
+  fields:
+    device_id:
+      required: false
+      selector:
+        device:
+          integration: purelink_ux8800
+    input:
+      required: true
+      example: 1
+      selector:
+        number:
+          min: 0
+          max: 8
+          mode: box
+
+recall_preset:
+  fields:
+    device_id:
+      required: false
+      selector:
+        device:
+          integration: purelink_ux8800
+    preset:
+      required: true
+      example: "BAR TALK"
+      selector:
+        text:
+
+save_preset:
+  fields:
+    device_id:
+      required: false
+      selector:
+        device:
+          integration: purelink_ux8800
+    slot:
+      required: true
+      example: 5
+      selector:
+        number:
+          min: 1
+          max: 20
+          mode: box
+    name:
+      required: true
+      example: "Movie Night"
+      selector:
+        text:
+
+set_input_name:
+  fields:
+    device_id:
+      required: false
+      selector:
+        device:
+          integration: purelink_ux8800
+    input:
+      required: true
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 8
+          mode: box
+    name:
+      required: true
+      example: "CABLE"
+      selector:
+        text:
+
+set_output_name:
+  fields:
+    device_id:
+      required: false
+      selector:
+        device:
+          integration: purelink_ux8800
+    output:
+      required: true
+      example: 1
+      selector:
+        number:
+          min: 1
+          max: 8
+          mode: box
+    name:
+      required: true
+      example: "TV1"
+      selector:
+        text:

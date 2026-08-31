@@ -1,0 +1,10 @@
+{
+  "services": {
+    "route": { "service": "mdi:swap-horizontal" },
+    "route_all": { "service": "mdi:swap-horizontal-bold" },
+    "recall_preset": { "service": "mdi:play-box-multiple" },
+    "save_preset": { "service": "mdi:content-save" },
+    "set_input_name": { "service": "mdi:rename-box" },
+    "set_output_name": { "service": "mdi:rename-box" }
+  }
+}

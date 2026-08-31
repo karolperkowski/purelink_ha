@@ -1,0 +1,4 @@
+# Test dependencies for the PureLink UX-8800 integration.
+# Pin pytest-homeassistant-custom-component to a version matching your target
+# Home Assistant release; it pulls in homeassistant + pytest plugins.
+pytest-homeassistant-custom-component

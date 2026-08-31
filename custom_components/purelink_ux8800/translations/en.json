@@ -1,0 +1,165 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "PureLink UX-8800",
+        "description": "Enter the connection details for your matrix switcher.",
+        "data": {
+          "host": "Host",
+          "username": "Username",
+          "password": "Password"
+        },
+        "data_description": {
+          "host": "IP address or hostname of the UX-8800.",
+          "username": "Web UI username (default: admin).",
+          "password": "Web UI password."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate with the UX-8800",
+        "description": "Update the credentials for {host}.",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure PureLink UX-8800",
+        "description": "Update the host or credentials for this matrix.",
+        "data": {
+          "host": "Host",
+          "username": "Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to the device.",
+      "invalid_auth": "Invalid username or password.",
+      "unknown": "Unexpected error."
+    },
+    "abort": {
+      "already_configured": "This device is already configured.",
+      "reauth_successful": "Re-authentication was successful.",
+      "reconfigure_successful": "Reconfiguration was successful.",
+      "wrong_device": "The host points to a different UX-8800 than this entry."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "PureLink UX-8800 options",
+        "data": {
+          "poll_interval": "Routing poll interval (seconds)",
+          "info_interval": "Diagnostics poll interval (seconds)"
+        },
+        "data_description": {
+          "poll_interval": "How often routing and names are refreshed. The device does not push changes, so lower values reflect front-panel changes faster.",
+          "info_interval": "How often signal, HDCP and sync diagnostics are refreshed."
+        }
+      }
+    }
+  },
+  "services": {
+    "route": {
+      "name": "Route",
+      "description": "Route an input to an output.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The matrix to control (only needed if you have more than one)."
+        },
+        "output": {
+          "name": "Output",
+          "description": "Output number (1-8) to change."
+        },
+        "input": {
+          "name": "Input",
+          "description": "Input number to route (1-8, or 0 to disconnect)."
+        }
+      }
+    },
+    "route_all": {
+      "name": "Route all",
+      "description": "Route every output to a single input.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The matrix to control (only needed if you have more than one)."
+        },
+        "input": {
+          "name": "Input",
+          "description": "Input number to route to all outputs (1-8, or 0 to disconnect)."
+        }
+      }
+    },
+    "recall_preset": {
+      "name": "Recall preset",
+      "description": "Recall a stored preset by slot number or name.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The matrix to control (only needed if you have more than one)."
+        },
+        "preset": {
+          "name": "Preset",
+          "description": "Preset slot number (1-20) or preset name."
+        }
+      }
+    },
+    "save_preset": {
+      "name": "Save preset",
+      "description": "Save the current routing into a preset slot.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The matrix to control (only needed if you have more than one)."
+        },
+        "slot": {
+          "name": "Slot",
+          "description": "Preset slot to overwrite (1-20)."
+        },
+        "name": {
+          "name": "Name",
+          "description": "Preset name (up to 8 characters)."
+        }
+      }
+    },
+    "set_input_name": {
+      "name": "Set input name",
+      "description": "Rename an input on the device.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The matrix to control (only needed if you have more than one)."
+        },
+        "input": {
+          "name": "Input",
+          "description": "Input number (1-8)."
+        },
+        "name": {
+          "name": "Name",
+          "description": "New name (up to 8 characters)."
+        }
+      }
+    },
+    "set_output_name": {
+      "name": "Set output name",
+      "description": "Rename an output on the device.",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "The matrix to control (only needed if you have more than one)."
+        },
+        "output": {
+          "name": "Output",
+          "description": "Output number (1-8)."
+        },
+        "name": {
+          "name": "Name",
+          "description": "New name (up to 8 characters)."
+        }
+      }
+    }
+  }
+}

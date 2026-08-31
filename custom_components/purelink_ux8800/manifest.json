@@ -1,0 +1,12 @@
+{
+  "domain": "purelink_ux8800",
+  "name": "PureLink UX-8800",
+  "codeowners": ["@your-github-username"],
+  "config_flow": true,
+  "documentation": "https://github.com/your-github-username/purelink-ux8800",
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/your-github-username/purelink-ux8800/issues",
+  "requirements": ["defusedxml>=0.7.1", "getmac>=0.9.0"],
+  "version": "0.1.0"
+}
