@@ -58,6 +58,9 @@ HANDSHAKE_TIMEOUT = 8.0
 RESPONSE_TIMEOUT = 6.0
 ROUTE_MAX_ATTEMPTS = 3
 ROUTE_SETTLE = 0.35
+# The device applies a new EDID with a delay and reports the *previous* EDID if
+# read too soon, so EDID reads use a longer settle and a second read.
+EDID_SETTLE = 1.2
 
 
 class PureLinkError(Exception):
@@ -660,7 +663,12 @@ class PureLinkClient:
             f"<command type='update' name='edid_refresh' "
             f"id='{input_index:02d}'>temp</command>"
         )
-        await asyncio.sleep(ROUTE_SETTLE)
+        # The device applies the new EDID with a delay and reports the previous
+        # EDID if read too soon; settle, then read twice so edid_current reflects
+        # the applied mode.
+        await asyncio.sleep(EDID_SETTLE)
+        await self.async_refresh_edid()
+        await asyncio.sleep(EDID_SETTLE)
         await self.async_refresh_edid()
 
     async def async_save_preset(

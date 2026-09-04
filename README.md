@@ -23,6 +23,9 @@ diagnostics — all over the device's local WebSocket control channel.
   (disabled by default) or the `set_edid` service.
 - **Services** — `route`, `route_all`, `recall_preset`, `save_preset`,
   `set_input_name`, `set_output_name`, `set_edid`.
+- **Events** — a `purelink_ux8800_route_changed` event fires whenever someone
+  switches inputs at the front panel or the device's web UI, so automations can
+  react to changes made outside Home Assistant.
 
 ## How it works
 
@@ -86,6 +89,47 @@ data:
   output: 3
   input: 1
 ```
+
+## Events
+
+When a poll detects a routing change that was **not** made through Home
+Assistant (someone used the front panel or the device's web UI), the
+integration fires a `purelink_ux8800_route_changed` event on the event bus —
+one per changed output. Changes made via HA entities/services do not fire it.
+
+Event data:
+
+| Field | Description |
+| --- | --- |
+| `device_id` | Device registry id of the matrix (usable in device automations). |
+| `entry_id` | Config entry id (distinguishes matrices if you have several). |
+| `output` | Output number (1-8). |
+| `output_name` | Friendly output name. |
+| `input` | New input number (0 = disconnected). |
+| `input_name` | Friendly input name (`null` when disconnected). |
+| `previous_input` | Input number before the change. |
+| `previous_input_name` | Friendly name before the change (`null` if it was disconnected). |
+
+Example automation — react when someone switches OUT 3 at the panel:
+
+```yaml
+automation:
+  - alias: "Matrix changed outside HA"
+    trigger:
+      - platform: event
+        event_type: purelink_ux8800_route_changed
+        event_data:
+          output: 3
+    action:
+      - service: notify.mobile_app_phone
+        data:
+          message: >
+            {{ trigger.event.data.output_name }} switched to
+            {{ trigger.event.data.input_name or 'off' }}
+```
+
+Omit `event_data` to trigger on any output. Because the device does not push
+state, the event fires on the next poll (default: within ~3 s of the change).
 
 ## Limitations / notes
 

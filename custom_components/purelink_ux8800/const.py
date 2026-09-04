@@ -51,6 +51,16 @@ SERVICE_SET_EDID: Final = "set_edid"
 # Number of assignable EDID modes (edidlist entries before the END marker).
 EDID_MODE_COUNT: Final = 27
 
+# Event fired when a routing change is detected that did not originate from
+# Home Assistant (i.e. someone switched inputs at the front panel or web UI).
+EVENT_ROUTE_CHANGED: Final = f"{DOMAIN}_route_changed"
+
+# Event payload fields (in addition to ATTR_INPUT / ATTR_OUTPUT below).
+ATTR_INPUT_NAME: Final = "input_name"
+ATTR_OUTPUT_NAME: Final = "output_name"
+ATTR_PREVIOUS_INPUT: Final = "previous_input"
+ATTR_PREVIOUS_INPUT_NAME: Final = "previous_input_name"
+
 # Service fields.
 ATTR_INPUT: Final = "input"
 ATTR_OUTPUT: Final = "output"
