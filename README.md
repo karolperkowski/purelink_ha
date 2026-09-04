@@ -6,10 +6,33 @@ A Home Assistant custom integration for **PureLink** AV matrix switchers (UX ser
 
 - Route any input to any output via a drop-down selector or media player card
 - `media_player` entity per output (source picker + on/off = connect/disconnect)
+- `button` entity per stored preset for one-tap recall
+- Fires a `purelink_route_changed` event when routing changes (including
+  switches made at the front panel), usable as an automation trigger
+- Optional entity naming from the switcher's own port names (Web UI credentials)
 - Automatic state polling every 30 seconds
 - Instant state update after routing changes
 - Connection error handling with automatic reconnect
 - Supports all UX-series matrix switchers (UX-4400, UX-8800, etc.)
+
+## Presets & events
+
+Recall a preset saved on the switcher with its **Preset** button (native
+Telnet, no credentials needed). Presets you have named appear with that name
+and are enabled by default; unnamed slots are created disabled. Saving presets
+is not yet supported — configure them via the device's web UI.
+
+Every routing change detected on a poll fires a `purelink_route_changed` event
+with `entry_id`, `output`, `input`, and `previous_input` — handy for reacting to
+front-panel switches Home Assistant would otherwise only see silently:
+
+```yaml
+trigger:
+  - platform: event
+    event_type: purelink_route_changed
+    event_data:
+      output: 3
+```
 
 ## Supported Devices
 

@@ -7,7 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DEFAULT_POLL_INTERVAL, DOMAIN
+from .const import DEFAULT_POLL_INTERVAL, DOMAIN, EVENT_ROUTE_CHANGED
 from .purelink_client import PureLinkClient
 
 _LOGGER = logging.getLogger(__name__)
@@ -39,4 +39,34 @@ class PureLinkCoordinator(DataUpdateCoordinator[dict[int, int]]):
             routing = await self.client.query_status()
         except Exception as err:
             raise UpdateFailed(f"PureLink status query failed: {err}") from err
-        return {out: routing.get(out, 0) for out in range(1, self._num_outputs + 1)}
+        new = {out: routing.get(out, 0) for out in range(1, self._num_outputs + 1)}
+        self._fire_route_events(new)
+        return new
+
+    def _fire_route_events(self, new: dict[int, int]) -> None:
+        """Fire a bus event for each output whose input changed since last poll.
+
+        ``self.data`` still holds the previous poll's routing while this method
+        runs (the coordinator assigns the return value afterwards). It is None
+        on the first refresh, so no events fire for the initial state.
+        """
+        previous = self.data
+        if not previous:
+            return
+        for output, source in new.items():
+            prior = previous.get(output)
+            if prior is not None and prior != source:
+                self.hass.bus.async_fire(
+                    EVENT_ROUTE_CHANGED,
+                    {
+                        "entry_id": self.config_entry.entry_id,
+                        "output": output,
+                        "input": source,
+                        "previous_input": prior,
+                    },
+                )
+
+    async def async_recall_preset(self, preset: int) -> None:
+        """Recall a preset, then refresh routing so entities update at once."""
+        await self.client.recall_preset(preset)
+        await self.async_request_refresh()

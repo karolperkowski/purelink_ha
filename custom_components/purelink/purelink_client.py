@@ -10,6 +10,7 @@ from .const import (
     CMD_DISCONNECT_ALL,
     CMD_DISCONNECT_TEMPLATE,
     CMD_HEARTBEAT,
+    CMD_PRESET_RECALL,
     CMD_STATUS_ALL,
     CMD_VERSION,
     DEFAULT_TIMEOUT,
@@ -154,3 +155,12 @@ class PureLinkClient:
         cmd = CMD_DISCONNECT_ALL.format(sid=self._sid)
         raw = await self._send_raw(cmd)
         return self._is_success_ack(raw)
+
+    async def recall_preset(self, preset: int) -> bool:
+        """Recall a stored preset (1..20). The device echoes the new routing."""
+        cmd = CMD_PRESET_RECALL.format(sid=self._sid, preset=preset)
+        raw = await self._send_raw(cmd)
+        ok = self._is_success_ack(raw)
+        if not ok:
+            _LOGGER.warning("PureLink recall preset %02d failed: %s", preset, raw.strip())
+        return ok

@@ -15,7 +15,9 @@ import aiohttp
 from .const import (
     WS_ATTR_INPUT_PREFIX,
     WS_ATTR_OUTPUT_PREFIX,
+    WS_ATTR_PRESET_PREFIX,
     WS_CMD_LOGIN_TEMPLATE,
+    WS_CMD_PRESET,
     WS_CMD_REQUESTALL,
     WS_FETCH_TIMEOUT,
     WS_FRAME_SETALL,
@@ -81,6 +83,58 @@ async def async_fetch_names(
                     _collect(frame, WS_ATTR_INPUT_PREFIX),
                     _collect(frame, WS_ATTR_OUTPUT_PREFIX),
                 )
+            finally:
+                await ws.close()
+    except PureLinkNamesError:
+        raise
+    except (
+        aiohttp.ClientError,
+        asyncio.TimeoutError,
+        OSError,
+        ElementTree.ParseError,
+    ) as err:
+        raise PureLinkNamesError(str(err)) from err
+
+
+async def async_fetch_presets(
+    session: aiohttp.ClientSession,
+    host: str,
+    username: str,
+    password: str,
+    *,
+    port: int = WS_PORT,
+    timeout: float = WS_FETCH_TIMEOUT,
+) -> dict[int, str]:
+    """One-shot fetch of preset slot names (1..20) from the web UI websocket.
+
+    Same channel and handshake as :func:`async_fetch_names`; the preset query
+    answers with a frame carrying presetnameN attributes. The Telnet protocol
+    can recall/read presets by number but exposes no preset *names*, so this is
+    the only source for friendly preset labels.
+    """
+    try:
+        async with asyncio.timeout(timeout):
+            ws = await session.ws_connect(f"ws://{host}:{port}")
+            try:
+                frame = await _recv_update(ws)
+                if frame.get("name") != WS_GREETING_NAME:
+                    raise PureLinkNamesError(
+                        f"Unexpected websocket greeting: {frame.get('name')!r}"
+                    )
+                await ws.send_str(
+                    WS_CMD_LOGIN_TEMPLATE.format(
+                        id=quoteattr(username), password=quoteattr(password)
+                    )
+                )
+                frame = await _recv_update(ws)
+                if frame.get("result") != WS_RESULT_OK:
+                    raise PureLinkAuthError("Web UI rejected the credentials")
+                await ws.send_str(WS_CMD_PRESET)
+                for _ in range(WS_MAX_FRAMES):
+                    frame = await _recv_update(ws)
+                    if any(k.startswith(WS_ATTR_PRESET_PREFIX) for k in frame):
+                        return _collect(frame, WS_ATTR_PRESET_PREFIX)
+                raise PureLinkNamesError("No preset frame received")
             finally:
                 await ws.close()
     except PureLinkNamesError:

@@ -12,7 +12,11 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .const import CONF_NUM_OUTPUTS, CONF_SWITCHER_ID, DOMAIN, PLATFORMS
 from .coordinator import PureLinkCoordinator
 from .purelink_client import PureLinkClient
-from .purelink_names import PureLinkNamesError, async_fetch_names
+from .purelink_names import (
+    PureLinkNamesError,
+    async_fetch_names,
+    async_fetch_presets,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,17 +57,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # on any failure — names are cosmetic, routing must keep working.
     input_names: dict[int, str] = {}
     output_names: dict[int, str] = {}
+    preset_names: dict[int, str] = {}
     username = entry.data.get(CONF_USERNAME) or ""
     password = entry.data.get(CONF_PASSWORD) or ""
     if username and password:
+        session = async_get_clientsession(hass)
         try:
             input_names, output_names = await async_fetch_names(
-                async_get_clientsession(hass), host, username, password
+                session, host, username, password
             )
         except PureLinkNamesError as err:
             _LOGGER.warning(
                 "Could not fetch port names from the web UI (%s); "
                 "using generic names",
+                err,
+            )
+        try:
+            preset_names = await async_fetch_presets(
+                session, host, username, password
+            )
+        except PureLinkNamesError as err:
+            _LOGGER.warning(
+                "Could not fetch preset names from the web UI (%s); "
+                "using generic preset labels",
                 err,
             )
 
@@ -72,6 +88,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "coordinator": coordinator,
         "input_names": input_names,
         "output_names": output_names,
+        "preset_names": preset_names,
         "sw_version": sw_version,
     }
 

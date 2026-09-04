@@ -11,6 +11,7 @@ from custom_components.purelink.const import (
     CMD_CONNECT_TEMPLATE,
     CMD_DISCONNECT_TEMPLATE,
     CMD_HEARTBEAT,
+    CMD_PRESET_RECALL,
     CMD_STATUS_ALL,
 )
 from custom_components.purelink.purelink_client import PureLinkClient
@@ -35,6 +36,24 @@ def test_command_templates_are_zero_padded() -> None:
     assert CMD_DISCONNECT_TEMPLATE.format(sid=255, out=4) == "*255CI00O04!"
     assert CMD_HEARTBEAT.format(sid=255) == "*255H000!"
     assert CMD_STATUS_ALL.format(sid=255) == "*255?C!"
+    assert CMD_PRESET_RECALL.format(sid=255, preset=1) == "*255PC01!"
+    assert CMD_PRESET_RECALL.format(sid=255, preset=20) == "*255PC20!"
+
+
+def test_recall_preset_sends_command_and_reads_ack() -> None:
+    client = _client()
+    reader, writer = _fake_connection(b"*255sCI04O01,I04O02,I01O03,I01O04!")
+    with patch("asyncio.open_connection", AsyncMock(return_value=(reader, writer))):
+        assert asyncio.run(client.recall_preset(20)) is True
+    sent = writer.write.call_args[0][0]
+    assert sent == b"*255PC20!\r\n"
+
+
+def test_recall_preset_reports_failure() -> None:
+    client = _client()
+    reader, writer = _fake_connection(b"Command Code Error!")
+    with patch("asyncio.open_connection", AsyncMock(return_value=(reader, writer))):
+        assert asyncio.run(client.recall_preset(21)) is False
 
 
 def test_parse_status_response_extracts_routing() -> None:

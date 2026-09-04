@@ -16,6 +16,14 @@ SETALL = (
 )
 
 
+PRESET_FRAME = (
+    '<Update name="update" '
+    'presetname1="CABLE" presetdata1="I01O01,I01O02" '
+    'presetname2="preset2" presetdata2="I00O01,I00O02" '
+    'presetname20="BAR TALK" presetdata20="I04O01,I04O02">done</Update>'
+)
+
+
 def _frame(xml: str) -> dict[str, str]:
     return {str(k): str(v) for k, v in ElementTree.fromstring(xml).attrib.items()}
 
@@ -30,6 +38,15 @@ def test_collect_names() -> None:
     assert outputs[5] == ""
     # The digit-suffix filter keeps outnameN keys out of an "out" collection.
     assert _collect(frame, "out")[1] == "1"
+
+
+def test_collect_preset_names() -> None:
+    presets = _collect(_frame(PRESET_FRAME), "presetname")
+    assert presets[1] == "CABLE"
+    assert presets[2] == "preset2"  # default/unconfigured slot preserved as-is
+    assert presets[20] == "BAR TALK"
+    # presetdataN must not leak into a presetname collection.
+    assert 3 not in presets
 
 
 def test_build_labels_real_device_shape() -> None:
