@@ -29,5 +29,43 @@
     "abort": {
       "already_configured": "This switcher is already configured."
     }
+  },
+  "services": {
+    "save_preset": {
+      "name": "Save preset",
+      "description": "Create or update a preset slot on the switcher. Requires Web UI credentials on the integration.",
+      "fields": {
+        "device_id": {
+          "name": "Switcher",
+          "description": "The PureLink switcher to update."
+        },
+        "slot": {
+          "name": "Preset slot",
+          "description": "Preset slot number (1-20) to write."
+        },
+        "name": {
+          "name": "Name",
+          "description": "Preset name (up to 8 characters). Leave empty to keep the slot's current name."
+        },
+        "routing": {
+          "name": "Routing",
+          "description": "Optional map of output number to input number (0 disconnects). Outputs you omit keep the current live routing. Leave empty to snapshot the current routing."
+        }
+      }
+    },
+    "delete_preset": {
+      "name": "Delete preset",
+      "description": "Reset a preset slot to unconfigured (empty). Requires Web UI credentials on the integration.",
+      "fields": {
+        "device_id": {
+          "name": "Switcher",
+          "description": "The PureLink switcher to update."
+        },
+        "slot": {
+          "name": "Preset slot",
+          "description": "Preset slot number (1-20) to clear."
+        }
+      }
+    }
   }
 }

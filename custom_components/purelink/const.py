@@ -20,6 +20,16 @@ CMD_PRESET_RECALL = "*{sid:03d}PC{preset:02d}!"
 
 # Presets: the switcher stores 20 preset slots (UX-4400 and UX-8800 alike).
 DEFAULT_NUM_PRESETS = 20
+# Device stores port/preset names in an 8-character field (matches in/out names).
+PRESET_NAME_MAX_LEN = 8
+
+# Preset-management services (write over the web UI websocket).
+SERVICE_SAVE_PRESET = "save_preset"
+SERVICE_DELETE_PRESET = "delete_preset"
+ATTR_DEVICE_ID = "device_id"
+ATTR_SLOT = "slot"
+ATTR_NAME = "name"
+ATTR_ROUTING = "routing"
 
 # Bus event fired when an output's routed input changes between polls (catches
 # front-panel / other-client switches the device never pushes to us).
@@ -35,12 +45,17 @@ WS_CMD_LOGIN_TEMPLATE = (
 )
 WS_CMD_REQUESTALL = "<command type='inquery' name='requestall_main'>main</command>"
 WS_CMD_PRESET = "<command type='inquery' name='preset'>preset</command>"
+# updatepreset writes ALL preset slots at once; the middle is built from
+# quoteattr-escaped presetnameN=.. presetdataN=.. pairs for every slot.
+WS_CMD_UPDATEPRESET_HEAD = "<command type='update' name='updatepreset' "
+WS_CMD_UPDATEPRESET_TAIL = ">preset</command>"
 WS_GREETING_NAME = "connected"
 WS_RESULT_OK = "good"
 WS_FRAME_SETALL = "setall"
 WS_ATTR_INPUT_PREFIX = "inname"
 WS_ATTR_OUTPUT_PREFIX = "outname"
 WS_ATTR_PRESET_PREFIX = "presetname"
+WS_ATTR_PRESET_DATA_PREFIX = "presetdata"
 
 # Generic port label fallbacks (used when no device names are available).
 INPUT_LABEL_TEMPLATE = "Input {n}"

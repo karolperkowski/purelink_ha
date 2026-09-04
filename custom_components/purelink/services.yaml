@@ -1,0 +1,41 @@
+save_preset:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: purelink
+    slot:
+      required: true
+      example: 5
+      selector:
+        number:
+          min: 1
+          max: 20
+          mode: box
+    name:
+      required: false
+      example: Movie Night
+      selector:
+        text:
+    routing:
+      required: false
+      example: "{ 1: 2, 3: 4 }"
+      selector:
+        object:
+
+delete_preset:
+  fields:
+    device_id:
+      required: true
+      selector:
+        device:
+          integration: purelink
+    slot:
+      required: true
+      example: 5
+      selector:
+        number:
+          min: 1
+          max: 20
+          mode: box

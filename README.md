@@ -19,8 +19,24 @@ A Home Assistant custom integration for **PureLink** AV matrix switchers (UX ser
 
 Recall a preset saved on the switcher with its **Preset** button (native
 Telnet, no credentials needed). Presets you have named appear with that name
-and are enabled by default; unnamed slots are created disabled. Saving presets
-is not yet supported — configure them via the device's web UI.
+and are enabled by default; unnamed slots are created disabled.
+
+Create, update, and delete presets from Home Assistant with the
+`purelink.save_preset` and `purelink.delete_preset` services. These write over
+the Web UI websocket, so the integration must be configured **with** the Web UI
+username and password; without them the services return an error. `save_preset`
+snapshots the current routing by default (or takes an explicit `routing` map and
+optional `name`); `delete_preset` resets a slot to unconfigured. After a change
+the integration reloads so the preset buttons update.
+
+```yaml
+service: purelink.save_preset
+data:
+  device_id: <your switcher device>
+  slot: 5
+  name: Movie
+  routing: { 1: 2, 2: 2, 3: 1 }   # optional; omit to snapshot current routing
+```
 
 Every routing change detected on a poll fires a `purelink_route_changed` event
 with `entry_id`, `output`, `input`, and `previous_input` — handy for reacting to

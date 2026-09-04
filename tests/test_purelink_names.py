@@ -1,10 +1,21 @@
-"""Tests for the web UI names module (parsing and labeling; no network)."""
+"""Tests for the web UI names module (parsing, labeling, preset write)."""
 
 from __future__ import annotations
 
+import asyncio
+from unittest.mock import AsyncMock
 from xml.etree import ElementTree
 
-from custom_components.purelink.purelink_names import _collect, build_labels
+import aiohttp
+import pytest
+
+from custom_components.purelink.purelink_names import (
+    PureLinkNamesError,
+    _collect,
+    async_write_preset,
+    build_labels,
+    build_preset_data,
+)
 
 SETALL = (
     '<Update name="setall" out1="1" outname1="TV1" inname1="CABLE" '
@@ -100,3 +111,106 @@ def test_build_labels_reserved() -> None:
     assert labels[1] == "Disconnected (1)"
     assert labels[2] == "CABLE"
     assert "Disconnected" not in labels.values()
+
+
+# --- preset data + write ---------------------------------------------------
+
+
+def test_build_preset_data() -> None:
+    # Full mapping for an 8x8.
+    assert build_preset_data({o: 1 for o in range(1, 9)}, 8) == (
+        "I01O01,I01O02,I01O03,I01O04,I01O05,I01O06,I01O07,I01O08"
+    )
+    # Omitted outputs and input 0 both render as disconnected.
+    assert build_preset_data({1: 4, 2: 3}, 4) == "I04O01,I03O02,I00O03,I00O04"
+    # Empty mapping -> all disconnected (the delete/reset payload).
+    assert build_preset_data({}, 4) == "I00O01,I00O02,I00O03,I00O04"
+
+
+def _preset_frame(names: dict[int, str], datas: dict[int, str]) -> str:
+    attrs = "".join(
+        f'presetname{i}="{names[i]}" presetdata{i}="{datas[i]}" ' for i in range(1, 21)
+    )
+    return f'<Update name="update" {attrs}>done</Update>'
+
+
+class _Msg:
+    type = aiohttp.WSMsgType.TEXT
+
+    def __init__(self, data: str) -> None:
+        self.data = data
+
+
+class _FakeWS:
+    """Minimal websocket double returning queued frames and recording sends."""
+
+    def __init__(self, frames: list[str]) -> None:
+        self._frames = list(frames)
+        self.sent: list[str] = []
+
+    async def send_str(self, data: str) -> None:
+        self.sent.append(data)
+
+    async def receive(self) -> _Msg:
+        return _Msg(self._frames.pop(0))
+
+    async def close(self) -> None:
+        return None
+
+
+def _session(ws: _FakeWS) -> AsyncMock:
+    session = AsyncMock()
+    session.ws_connect = AsyncMock(return_value=ws)
+    return session
+
+
+GREET = '<Update name="connected">temp</Update>'
+LOGIN_OK = '<Update name="update" result="good"/>'
+
+
+def test_write_preset_happy_path() -> None:
+    names = {i: f"preset{i}" for i in range(1, 21)}
+    datas = {i: build_preset_data({}, 8) for i in range(1, 21)}
+    after_names = {**names, 4: "MOVIE"}
+    after_datas = {**datas, 4: build_preset_data({1: 2}, 8)}
+    ws = _FakeWS(
+        [GREET, LOGIN_OK, _preset_frame(names, datas), _preset_frame(after_names, after_datas)]
+    )
+    asyncio.run(
+        async_write_preset(
+            _session(ws), "h", "admin", "pw", 4, "MOVIE", build_preset_data({1: 2}, 8)
+        )
+    )
+    # The updatepreset frame must carry all 20 slots with slot 4 changed.
+    update = next(s for s in ws.sent if "updatepreset" in s)
+    assert 'presetname4="MOVIE"' in update
+    assert update.count("presetname") == 20 and update.count("presetdata") == 20
+
+
+def test_write_preset_aborts_on_incomplete_table() -> None:
+    # A table missing slots must NEVER be written back (would blank presets).
+    partial = {i: f"preset{i}" for i in range(1, 21)}
+    partial_data = {i: build_preset_data({}, 8) for i in range(1, 21)}
+    frame = _preset_frame(partial, partial_data).replace(
+        'presetname7="preset7" presetdata7="I00O01,I00O02,I00O03,I00O04,I00O05,I00O06,I00O07,I00O08" ',
+        "",
+    )
+    ws = _FakeWS([GREET, LOGIN_OK, frame])
+    with pytest.raises(PureLinkNamesError, match="Incomplete preset table"):
+        asyncio.run(
+            async_write_preset(_session(ws), "h", "admin", "pw", 4, "X", build_preset_data({}, 8))
+        )
+    assert not any("updatepreset" in s for s in ws.sent)  # nothing written
+
+
+def test_write_preset_aborts_on_empty_slot() -> None:
+    # A slot present but with an EMPTY data value must also abort the write.
+    names = {i: f"preset{i}" for i in range(1, 21)}
+    datas = {i: build_preset_data({}, 8) for i in range(1, 21)}
+    datas[7] = ""
+    ws = _FakeWS([GREET, LOGIN_OK, _preset_frame(names, datas)])
+    with pytest.raises(PureLinkNamesError, match="Incomplete preset table"):
+        asyncio.run(
+            async_write_preset(_session(ws), "h", "admin", "pw", 4, "X", build_preset_data({}, 8))
+        )
+    assert not any("updatepreset" in s for s in ws.sent)

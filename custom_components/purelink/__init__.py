@@ -17,6 +17,7 @@ from .purelink_names import (
     async_fetch_names,
     async_fetch_presets,
 )
+from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -90,7 +91,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "output_names": output_names,
         "preset_names": preset_names,
         "sw_version": sw_version,
+        # Serialises preset writes for this entry: each write reads all 20
+        # slots then writes them back, so overlapping writes must not interleave
+        # (last-writer-wins would lose the other's slot).
+        "preset_lock": asyncio.Lock(),
     }
+
+    async_setup_services(hass)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
